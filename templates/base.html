@@ -5,21 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cereal-Sync POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Your Swissborg Green Accent */
+        .brand-green { color: #02c076; }
+        .bg-brand-green { background-color: #02c076; }
+        .border-brand-green { border-color: #02c076; }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <nav class="bg-blue-800 text-white p-4 shadow-lg">
+<body class="bg-gray-50 font-sans">
+    <nav class="bg-white border-b border-gray-100 p-4 mb-8">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">Cereal-Sync POS</h1>
-            <div class="space-x-4">
-                <a href="#" class="hover:underline">Dashboard</a>
-                <a href="#" class="hover:underline">Inventory</a>
-                <a href="/admin" class="bg-blue-600 px-3 py-1 rounded">Admin Panel</a>
+            <h1 class="text-2xl font-black tracking-tighter text-gray-900">
+                CEREAL<span class="brand-green">SYNC</span>
+            </h1>
+            <div class="flex items-center gap-4 text-sm font-medium text-gray-500">
+                <span>Bamburi Branch</span>
+                <div class="h-2 w-2 rounded-full bg-green-500"></div>
             </div>
         </div>
     </nav>
-    <div class="container mx-auto mt-6 p-4">
-        {% block content %}
-        {% endblock %}
-    </div>
+
+    <main class="container mx-auto px-4">
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from inventory.views import sales_dashboard
+from inventory.views import sales_dashboard, add_to_cart, clear_cart, checkout
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', sales_dashboard, name='dashboard'), # Your main POS screen
+    path('add/<int:product_id>/', add_to_cart, name='add_to_cart'),
+    path('clear/', clear_cart, name='clear_cart'),
+    path('checkout/', checkout, name='checkout'),
 ]

@@ -29,7 +29,7 @@ class Sale(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity_sold = models.DecimalField(max_digits=10, decimal_places=2, help_text="Weight sold in KGs")
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         # Business Logic: Automatically reduce stock when a sale is made!

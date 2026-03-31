@@ -1,24 +1,45 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-    
+<div class="flex flex-wrap gap-4 mb-10">
+    <div class="flex-1 min-w-[200px] stats-gradient p-5 rounded-2xl text-white shadow-lg">
+        <p class="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Revenue</p>
+        <h4 class="text-2xl font-bold">KES {{ total_revenue }}</h4>
+    </div>
+    <div class="flex-1 min-w-[200px] bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Sales</p>
+        <h4 class="text-2xl font-bold text-gray-900">{{ sales_count }}</h4>
+    </div>
+    <div class="flex-1 min-w-[200px] bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Top Mover</p>
+        <h4 class="text-lg font-bold text-swiss-green truncate uppercase">{{ top_product }}</h4>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
     <div class="lg:col-span-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {% for product in products %}
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-brand-green transition-all group">
-                <div class="flex justify-between mb-4">
-                    <span class="text-xs font-bold uppercase tracking-widest text-gray-400">{{ product.category.name }}</span>
-                    <span class="text-brand-green font-bold text-lg">KES {{ product.selling_price }}</span>
+            <div class="glass-card rounded-2xl p-4 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-16 h-16">
+                    <div class="absolute transform rotate-45 {% if product.weight_in_stock <= product.min_stock_level %}bg-red-500{% else %}bg-swiss-green/10{% endif %} text-[8px] font-bold text-center py-1 right-[-35px] top-[15px] w-[100px]">
+                        {% if product.weight_in_stock <= product.min_stock_level %}LOW{% else %}OK{% endif %}
+                    </div>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-6">{{ product.name }}</h3>
+
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{{ product.category.name }}</span>
+                <h3 class="text-lg font-bold text-gray-800 mt-1 mb-3">{{ product.name }}</h3>
                 
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-sm font-black text-gray-900">KES {{ product.selling_price }}<span class="text-gray-400 font-normal">/kg</span></p>
+                </div>
+
                 <form action="{% url 'add_to_cart' product.id %}" method="POST" class="flex gap-2">
                     {% csrf_token %}
-                    <input type="number" name="quantity" step="0.1" placeholder="KG" 
-                           class="w-24 bg-gray-50 rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-green-500">
-                    <button type="submit" class="flex-1 bg-gray-900 text-white rounded-xl py-2 font-bold hover:bg-brand-green transition-colors">
-                        Add
+                    <input type="number" name="quantity" step="0.1" value="1.0" 
+                           class="w-16 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 text-sm font-bold focus:outline-none focus:border-swiss-green">
+                    <button type="submit" class="flex-1 bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-swiss-green hover:text-gray-900 transition-all">
+                        + ADD
                     </button>
                 </form>
             </div>
@@ -27,33 +48,37 @@
     </div>
 
     <div class="lg:col-span-4">
-        <div class="bg-gray-900 rounded-3xl p-8 text-white sticky top-8 shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6 italic">Current Order</h2>
+        <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-xl sticky top-6">
+            <h2 class="text-xl font-black mb-6 uppercase tracking-tighter flex items-center gap-2">
+                Cart 
+                <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded-full">{{ request.session.cart|length }}</span>
+            </h2>
             
-            <div class="space-y-6 mb-8 max-h-[400px] overflow-y-auto pr-2">
+            <div class="divide-y divide-gray-50 mb-6 max-h-[300px] overflow-y-auto">
                 {% for id, item in request.session.cart.items %}
-                <div class="flex justify-between items-start border-b border-gray-800 pb-4">
+                <div class="py-3 flex justify-between items-center">
                     <div>
-                        <p class="font-bold text-lg">{{ item.name }}</p>
-                        <p class="text-gray-500 text-sm">{{ item.quantity }}kg</p>
+                        <p class="text-sm font-bold text-gray-800">{{ item.name }}</p>
+                        <p class="text-[10px] text-gray-400 font-medium">{{ item.quantity }}kg × {{ item.price }}</p>
                     </div>
-                    <p class="font-mono text-brand-green">KES {{ item.subtotal }}</p>
+                    <p class="text-sm font-bold text-gray-900">KES {{ item.subtotal }}</p>
                 </div>
                 {% empty %}
-                <p class="text-gray-600 text-center py-10">Your bag is empty...</p>
+                <div class="text-center py-10">
+                    <p class="text-xs text-gray-300 font-bold uppercase tracking-widest">No Selection</p>
+                </div>
                 {% endfor %}
             </div>
 
             {% if request.session.cart %}
-            <div class="space-y-4">
-                <div class="flex justify-between items-center text-xl font-black">
-                    <span>Total</span>
-                    <span class="text-brand-green">KES {{ total_cart_value }}</span>
+            <div class="pt-4">
+                <div class="flex justify-between items-end mb-6">
+                    <span class="text-xs font-bold text-gray-400 uppercase">Total</span>
+                    <span class="text-2xl font-black text-gray-900">KES {{ total_cart_value }}</span>
                 </div>
-                <a href="{% url 'checkout' %}" class="w-full block text-center bg-brand-green text-gray-900 py-4 rounded-2xl font-black text-lg hover:scale-[1.02] transition-transform">
-    CHECKOUT
-</a>
-                <a href="{% url 'clear_cart' %}" class="block text-center text-xs text-gray-500 hover:text-red-400 uppercase tracking-widest">Clear All</a>
+                <a href="{% url 'checkout' %}" class="block w-full bg-swiss-green text-gray-900 text-center py-4 rounded-xl font-black text-sm uppercase hover:shadow-lg hover:shadow-green-200 transition-all">
+                    Complete Transaction
+                </a>
             </div>
             {% endif %}
         </div>

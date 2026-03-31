@@ -3,29 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cereal-Sync POS</title>
+    <title>Cereal-Sync | POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* Your Swissborg Green Accent */
-        .brand-green { color: #02c076; }
-        .bg-brand-green { background-color: #02c076; }
-        .border-brand-green { border-color: #02c076; }
+        body { font-family: 'Inter', sans-serif; }
+        .swiss-green { color: #02c076; }
+        .bg-swiss-green { background-color: #02c076; }
+        .swiss-border { border-width: 3px; }
+        .glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    border-color: #02c076;
+}
+.stats-gradient {
+    background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+}
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
-    <nav class="bg-white border-b border-gray-100 p-4 mb-8">
+<body class="bg-[#f9fafb] text-gray-900">
+    <nav class="p-6 bg-white border-b-4 border-gray-900 mb-8">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-black tracking-tighter text-gray-900">
-                CEREAL<span class="brand-green">SYNC</span>
-            </h1>
-            <div class="flex items-center gap-4 text-sm font-medium text-gray-500">
-                <span>Bamburi Branch</span>
-                <div class="h-2 w-2 rounded-full bg-green-500"></div>
+            <div class="flex items-center gap-2">
+                <div class="h-8 w-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                    <div class="h-4 w-4 bg-swiss-green rounded-full"></div>
+                </div>
+                <h1 class="text-2xl font-black tracking-tighter uppercase">Cereal<span class="swiss-green">Sync</span></h1>
+            </div>
+            <div class="hidden md:flex gap-6 font-bold text-sm uppercase tracking-widest">
+                <a href="{% url 'dashboard' %}" class="border-b-2 border-swiss-green">Dashboard</a>
+                <a href="/admin" class="hover:swiss-green">Inventory</a>
             </div>
         </div>
     </nav>
-
-    <main class="container mx-auto px-4">
+    <main class="container mx-auto px-4 pb-20">
         {% block content %}{% endblock %}
     </main>
 </body>

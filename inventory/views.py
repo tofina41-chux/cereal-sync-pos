@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, Category, Sale
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.utils import timezone
 from decimal import Decimal
 
 def sales_dashboard(request):
@@ -16,7 +17,22 @@ def sales_dashboard(request):
     if category_id:
         products = products.filter(category_id=category_id)
 
-    # Calculate cart total for the unique UI
+    # --- NEW: Daily Stats Logic ---
+    today = timezone.now().date()
+    daily_sales = Sale.objects.filter(created_at__date=today)
+    
+    # Calculate revenue and transaction count
+    total_revenue = daily_sales.aggregate(Sum('total_price'))['total_price__sum'] or 0
+    sales_count = daily_sales.count()
+
+    # Find the top selling product today
+    top_product_data = daily_sales.values('product__name').annotate(
+        total_qty=Sum('quantity_sold')
+    ).order_by('-total_qty').first()
+    
+    top_product = top_product_data['product__name'] if top_product_data else "None"
+
+    # --- Cart Logic ---
     cart = request.session.get('cart', {})
     total_cart_value = sum(float(item.get('subtotal', 0)) for item in cart.values())
 
@@ -25,12 +41,14 @@ def sales_dashboard(request):
         'categories': categories,
         'query': query,
         'total_cart_value': total_cart_value,
+        'total_revenue': total_revenue,
+        'sales_count': sales_count,
+        'top_product': top_product,
     })
 
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     
-    # Get weight from the form, default to 1.0 if empty or invalid
     quantity_raw = request.POST.get('quantity')
     try:
         quantity = float(quantity_raw) if quantity_raw and float(quantity_raw) > 0 else 1.0
@@ -71,25 +89,21 @@ def checkout(request):
         for item_id, item in cart.items():
             product = get_object_or_404(Product, id=item_id)
             
-            # Convert values to Decimal to keep the database happy
             qty = Decimal(str(item['quantity']))
             price = Decimal(str(item['price']))
             total = qty * price
 
-            # Create the record
             Sale.objects.create(
                 product=product,
                 quantity_sold=qty,
                 total_price=total
             )
         
-        # Clear the cart ONLY if the loop finishes successfully
         request.session['cart'] = {}
         request.session.modified = True
         
         return render(request, 'inventory/success.html')
 
     except Exception as e:
-        # This will print the EXACT error in your terminal so you can see it
         print(f"Checkout Error: {e}")
         return redirect('dashboard')

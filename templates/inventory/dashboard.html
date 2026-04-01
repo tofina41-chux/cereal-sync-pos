@@ -18,6 +18,35 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
     <div class="lg:col-span-8">
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+    <div class="flex-1 relative">
+        <form method="GET" action="{% url 'dashboard' %}" class="flex gap-2">
+            <div class="relative flex-1">
+                <span class="absolute left-4 top-3.5 text-gray-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
+                </span>
+                <input type="text" name="search" value="{{ query }}" placeholder="Search cereal..." 
+                       class="w-full bg-white border border-gray-100 rounded-xl py-3 pl-12 pr-4 font-bold text-sm focus:border-swiss-green outline-none shadow-sm transition-all">
+            </div>
+            <button type="submit" class="bg-gray-900 text-white px-6 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-swiss-green hover:text-gray-900 transition-all">
+                Find
+            </button>
+        </form>
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+        <a href="{% url 'dashboard' %}" 
+           class="px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all {% if not request.GET.category %}bg-gray-900 text-white shadow-lg{% else %}bg-white text-gray-400 border border-gray-100{% endif %}">
+            All
+        </a>
+        {% for cat in categories %}
+        <a href="?category={{ cat.id }}" 
+           class="px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all {% if request.GET.category == cat.id|stringformat:'i' %}bg-gray-900 text-white shadow-lg{% else %}bg-white text-gray-400 border border-gray-100{% endif %}">
+            {{ cat.name }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {% for product in products %}
             <div class="glass-card rounded-2xl p-4 relative overflow-hidden group">
@@ -84,4 +113,33 @@
         </div>
     </div>
 </div>
+
+<div id="mpesaModal" class="hidden fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-sm w-full border-4 border-gray-900 shadow-[12px_12px_0px_0px_rgba(2,192,118,1)]">
+        <h3 class="text-2xl font-black mb-2 uppercase italic">M-Pesa Pay</h3>
+        <p class="text-gray-400 text-xs font-bold mb-6 uppercase tracking-widest">Enter Customer Details</p>
+        
+        <form id="stkPushForm">
+            <div class="mb-6">
+                <label class="block text-[10px] font-black uppercase mb-2">Phone Number</label>
+                <input type="text" id="customerPhone" placeholder="254712345678" 
+                       class="w-full border-2 border-gray-900 rounded-xl p-4 font-bold outline-none focus:border-swiss-green">
+            </div>
+            
+            <button type="button" onclick="sendStkPush()" class="w-full bg-gray-900 text-white py-4 rounded-xl font-black uppercase hover:bg-swiss-green hover:text-gray-900 transition-all">
+                Send PIN Prompt
+            </button>
+            <button type="button" onclick="toggleModal()" class="w-full mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleModal() {
+    const modal = document.getElementById('mpesaModal');
+    modal.classList.toggle('hidden');
+}
+
+// Update your "Complete Transaction" button to call toggleModal() instead of a link
+</script>
 {% endblock %}

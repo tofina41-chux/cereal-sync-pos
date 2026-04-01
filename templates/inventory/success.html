@@ -1,15 +1,77 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-md mx-auto mt-20 text-center bg-white p-10 rounded-3xl shadow-xl">
-    <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+<div class="max-w-md mx-auto mt-12 text-center bg-white p-10 rounded-3xl shadow-xl print:hidden">
+    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
     </div>
-    <h2 class="text-3xl font-black mb-2">Sale Complete!</h2>
-    <p class="text-gray-500 mb-8">The inventory has been updated and the transaction is logged.</p>
+    <h2 class="text-2xl font-black mb-2 uppercase">Sale Logged</h2>
+    <p class="text-gray-400 text-sm mb-8">Stock levels have been updated.</p>
     
-    <a href="{% url 'dashboard' %}" class="block w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-green-600 transition-colors">
-        Back to Dashboard
-    </a>
+    <div class="space-y-3">
+        <button onclick="window.print()" class="w-full bg-swiss-green text-gray-900 py-4 rounded-2xl font-black text-sm uppercase hover:shadow-lg transition-all">
+            Print Receipt
+        </button>
+        <a href="{% url 'dashboard' %}" class="block w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold text-sm uppercase">
+            New Transaction
+        </a>
+    </div>
 </div>
+
+<div class="hidden print:block text-black bg-white p-4 font-mono text-[12px] w-[80mm] mx-auto">
+    <div class="text-center mb-4">
+        <h1 class="text-lg font-bold uppercase">CEREAL-SYNC</h1>
+        <p class="text-[10px]">BAMBURI BRANCH, MOMBASA</p>
+        <p class="text-[10px]">{{ timestamp|date:"d/m/Y H:i" }}</p>
+        <p class="text-[10px]">INV: #{{ receipt_no }}</p>
+    </div>
+
+    <div class="border-t border-b border-black border-dashed py-2 mb-2">
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-[10px]">
+                    <th>ITEM</th>
+                    <th class="text-right">QTY</th>
+                    <th class="text-right">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in receipt_items %}
+                <tr class="text-[10px]">
+                    <td>{{ item.name|upper|truncatechars:12 }}</td>
+                    <td class="text-right">{{ item.quantity }}kg</td>
+                    <td class="text-right">{{ item.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="flex justify-between font-bold mb-6">
+        <span>TOTAL</span>
+        <span>KES {{ total_cart_value }}</span>
+    </div>
+
+    <div class="text-center text-[9px] italic">
+        <p>No refund without receipt.</p>
+        <p>*** Powered by Tofina ***</p>
+    </div>
+</div>
+
+<style>
+    @media print {
+        /* Hide everything by default */
+        body * { visibility: hidden; background: white !important; }
+        /* Show only the receipt area */
+        .print\:block, .print\:block * { visibility: visible; }
+        .print\:block { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100%;
+        }
+        /* Remove margins/headers added by browsers */
+        @page { margin: 0; }
+    }
+</style>
 {% endblock %}

@@ -1,145 +1,59 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<div class="flex flex-wrap gap-4 mb-10">
-    <div class="flex-1 min-w-[200px] stats-gradient p-5 rounded-2xl text-white shadow-lg">
-        <p class="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Revenue</p>
-        <h4 class="text-2xl font-bold">KES {{ total_revenue }}</h4>
-    </div>
-    <div class="flex-1 min-w-[200px] bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-        <p class="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Sales</p>
-        <h4 class="text-2xl font-bold text-gray-900">{{ sales_count }}</h4>
-    </div>
-    <div class="flex-1 min-w-[200px] bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-        <p class="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Top Mover</p>
-        <h4 class="text-lg font-bold text-swiss-green truncate uppercase">{{ top_product }}</h4>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-    <div class="lg:col-span-8">
-        <div class="flex flex-col md:flex-row gap-4 mb-8">
-    <div class="flex-1 relative">
-        <form method="GET" action="{% url 'dashboard' %}" class="flex gap-2">
-            <div class="relative flex-1">
-                <span class="absolute left-4 top-3.5 text-gray-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="3"/></svg>
-                </span>
-                <input type="text" name="search" value="{{ query }}" placeholder="Search cereal..." 
-                       class="w-full bg-white border border-gray-100 rounded-xl py-3 pl-12 pr-4 font-bold text-sm focus:border-swiss-green outline-none shadow-sm transition-all">
-            </div>
-            <button type="submit" class="bg-gray-900 text-white px-6 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-swiss-green hover:text-gray-900 transition-all">
-                Find
-            </button>
-        </form>
-    </div>
-
-    <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-        <a href="{% url 'dashboard' %}" 
-           class="px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all {% if not request.GET.category %}bg-gray-900 text-white shadow-lg{% else %}bg-white text-gray-400 border border-gray-100{% endif %}">
-            All
-        </a>
-        {% for cat in categories %}
-        <a href="?category={{ cat.id }}" 
-           class="px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all {% if request.GET.category == cat.id|stringformat:'i' %}bg-gray-900 text-white shadow-lg{% else %}bg-white text-gray-400 border border-gray-100{% endif %}">
-            {{ cat.name }}
-        </a>
-        {% endfor %}
-    </div>
-</div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {% for product in products %}
-            <div class="glass-card rounded-2xl p-4 relative overflow-hidden group">
-                <div class="absolute top-0 right-0 w-16 h-16">
-                    <div class="absolute transform rotate-45 {% if product.weight_in_stock <= product.min_stock_level %}bg-red-500{% else %}bg-swiss-green/10{% endif %} text-[8px] font-bold text-center py-1 right-[-35px] top-[15px] w-[100px]">
-                        {% if product.weight_in_stock <= product.min_stock_level %}LOW{% else %}OK{% endif %}
-                    </div>
-                </div>
-
-                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{{ product.category.name }}</span>
-                <h3 class="text-lg font-bold text-gray-800 mt-1 mb-3">{{ product.name }}</h3>
-                
-                <div class="flex items-center justify-between mb-4">
-                    <p class="text-sm font-black text-gray-900">KES {{ product.selling_price }}<span class="text-gray-400 font-normal">/kg</span></p>
-                </div>
-
-                <form action="{% url 'add_to_cart' product.id %}" method="POST" class="flex gap-2">
-                    {% csrf_token %}
-                    <input type="number" name="quantity" step="0.1" value="1.0" 
-                           class="w-16 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 text-sm font-bold focus:outline-none focus:border-swiss-green">
-                    <button type="submit" class="flex-1 bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-swiss-green hover:text-gray-900 transition-all">
-                        + ADD
-                    </button>
-                </form>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="lg:col-span-4">
-        <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-xl sticky top-6">
-            <h2 class="text-xl font-black mb-6 uppercase tracking-tighter flex items-center gap-2">
-                Cart 
-                <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded-full">{{ request.session.cart|length }}</span>
-            </h2>
-            
-            <div class="divide-y divide-gray-50 mb-6 max-h-[300px] overflow-y-auto">
-                {% for id, item in request.session.cart.items %}
-                <div class="py-3 flex justify-between items-center">
-                    <div>
-                        <p class="text-sm font-bold text-gray-800">{{ item.name }}</p>
-                        <p class="text-[10px] text-gray-400 font-medium">{{ item.quantity }}kg × {{ item.price }}</p>
-                    </div>
-                    <p class="text-sm font-bold text-gray-900">KES {{ item.subtotal }}</p>
-                </div>
-                {% empty %}
-                <div class="text-center py-10">
-                    <p class="text-xs text-gray-300 font-bold uppercase tracking-widest">No Selection</p>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if request.session.cart %}
-            <div class="pt-4">
-                <div class="flex justify-between items-end mb-6">
-                    <span class="text-xs font-bold text-gray-400 uppercase">Total</span>
-                    <span class="text-2xl font-black text-gray-900">KES {{ total_cart_value }}</span>
-                </div>
-                <a href="{% url 'checkout' %}" class="block w-full bg-swiss-green text-gray-900 text-center py-4 rounded-xl font-black text-sm uppercase hover:shadow-lg hover:shadow-green-200 transition-all">
-                    Complete Transaction
-                </a>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<div id="mpesaModal" class="hidden fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-8 max-w-sm w-full border-4 border-gray-900 shadow-[12px_12px_0px_0px_rgba(2,192,118,1)]">
-        <h3 class="text-2xl font-black mb-2 uppercase italic">M-Pesa Pay</h3>
-        <p class="text-gray-400 text-xs font-bold mb-6 uppercase tracking-widest">Enter Customer Details</p>
-        
-        <form id="stkPushForm">
-            <div class="mb-6">
-                <label class="block text-[10px] font-black uppercase mb-2">Phone Number</label>
-                <input type="text" id="customerPhone" placeholder="254712345678" 
-                       class="w-full border-2 border-gray-900 rounded-xl p-4 font-bold outline-none focus:border-swiss-green">
-            </div>
-            
-            <button type="button" onclick="sendStkPush()" class="w-full bg-gray-900 text-white py-4 rounded-xl font-black uppercase hover:bg-swiss-green hover:text-gray-900 transition-all">
-                Send PIN Prompt
-            </button>
-            <button type="button" onclick="toggleModal()" class="w-full mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cancel</button>
-        </form>
-    </div>
-</div>
-
 <script>
-function toggleModal() {
-    const modal = document.getElementById('mpesaModal');
-    modal.classList.toggle('hidden');
-}
+    async function sendStkPush(event) { 
+        const phoneInput = document.getElementById('customerPhone');
+        const phone = phoneInput ? phoneInput.value.trim() : "";
+        
+        // Ensure amount is an integer
+        const amount = Math.round(parseFloat("{{ total_cart_value|default:'0' }}"));
+        const btn = event.target;
+        
+        // 1. Validation
+        if (!phone.startsWith('254') || phone.length !== 12) {
+            alert("Please use format 2547XXXXXXXX");
+            return;
+        }
 
-// Update your "Complete Transaction" button to call toggleModal() instead of a link
+        if (amount <= 0) {
+            alert("Your cart is empty! Add some cereal first.");
+            return;
+        }
+
+        // 2. UI Feedback
+        const originalText = btn.innerText;
+        btn.innerText = "SENDING PUSH...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch("{% url 'initiate_stk_push' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: `phone=${phone}&amount=${amount}`
+            });
+
+            const data = await response.json();
+            console.log("Safaricom Response:", data);
+
+            // 3. Handle Response
+            if (data.ResponseCode === "0") {
+                alert("PIN Prompt Sent! Enter your PIN on your phone to complete payment.");
+                
+                setTimeout(() => {
+                    window.location.href = "{% url 'checkout' %}";
+                }, 3000); 
+                
+            } else {
+                const errorMsg = data.errorMessage || data.CustomerMessage || "Check your Daraja credentials.";
+                alert("M-Pesa Error: " + errorMsg);
+            }
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            alert("Connection failed. Check if Django and ngrok are running.");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
 </script>
-{% endblock %}

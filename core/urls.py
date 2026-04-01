@@ -15,8 +15,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from inventory.views import sales_dashboard, add_to_cart, clear_cart, checkout
+from inventory.views import initiate_stk_push, mpesa_callback
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,4 +25,6 @@ urlpatterns = [
     path('add/<int:product_id>/', add_to_cart, name='add_to_cart'),
     path('clear/', clear_cart, name='clear_cart'),
     path('checkout/', checkout, name='checkout'),
+    path('payment/stk-push/', initiate_stk_push, name='initiate_stk_push'),
+    path('mpesa/callback/', mpesa_callback, name='mpesa_callback'),
 ]

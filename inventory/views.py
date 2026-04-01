@@ -1,32 +1,46 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.conf import settings
 from .models import Product, Category, Sale
 from django.db.models import Q, Sum
 from django.utils import timezone
 from decimal import Decimal
 import uuid 
-from .mpesa_utils import get_access_token, generate_mpesa_password
 import requests
-from django.views.decorators.csrf import csrf_exempt
 import json
+from django.views.decorators.csrf import csrf_exempt
+from .mpesa_utils import get_access_token, generate_mpesa_password
 
+# --- M-PESA CALLBACK ---
 @csrf_exempt
 def mpesa_callback(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        result_code = data['Body']['stkCallback']['ResultCode']
-        
-        if result_code == 0:
-            # Payment Successful! 
-            # Here you would mark the order as "Paid" in your DB
-            print("Payment Received Successfully!")
-        else:
-            print("Payment Cancelled or Failed")
+        try:
+            data = json.loads(request.body)
+            result_code = data['Body']['stkCallback']['ResultCode']
             
-        return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
+            if result_code == 0:
+                # Payment Successful! 
+                # In a real app, you'd find the Order in your DB and mark it 'Paid'
+                print("Payment Received Successfully!")
+            else:
+                print(f"Payment Cancelled or Failed. Code: {result_code}")
+                
+            return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
+        except Exception as e:
+            print(f"Callback Error: {e}")
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Internal Error"})
+
+# --- INITIATE STK PUSH ---
 def initiate_stk_push(request):
     if request.method == "POST":
         phone_number = request.POST.get('phone') # Format: 2547xxxxxxxx
-        amount = request.POST.get('amount')
+        amount_raw = request.POST.get('amount', '0')
+        
+        try:
+            amount = int(float(amount_raw))
+        except ValueError:
+            amount = 1 # Fallback for testing
         
         access_token = get_access_token()
         password, timestamp = generate_mpesa_password()
@@ -39,18 +53,19 @@ def initiate_stk_push(request):
             "Password": password,
             "Timestamp": timestamp,
             "TransactionType": "CustomerPayBillOnline",
-            "Amount": int(float(amount)),
+            "Amount": amount,
             "PartyA": phone_number,
             "PartyB": settings.MPESA_SHORTCODE,
             "PhoneNumber": phone_number,
             "CallBackURL": settings.MPESA_CALLBACK_URL,
-            "AccountReference": "CerealSyncBamburi",
+            "AccountReference": "CerealSyncPOS",
             "TransactionDesc": "Payment for Cereal"
         }
         
         response = requests.post(api_url, json=payload, headers=headers)
         return JsonResponse(response.json())
 
+# --- DASHBOARD ---
 def sales_dashboard(request):
     query = request.GET.get('search', '')
     category_id = request.GET.get('category', '')
@@ -64,22 +79,20 @@ def sales_dashboard(request):
     if category_id:
         products = products.filter(category_id=category_id)
 
-    # --- NEW: Daily Stats Logic ---
+    # Daily Stats
     today = timezone.now().date()
     daily_sales = Sale.objects.filter(created_at__date=today)
     
-    # Calculate revenue and transaction count
     total_revenue = daily_sales.aggregate(Sum('total_price'))['total_price__sum'] or 0
     sales_count = daily_sales.count()
 
-    # Find the top selling product today
     top_product_data = daily_sales.values('product__name').annotate(
         total_qty=Sum('quantity_sold')
     ).order_by('-total_qty').first()
     
     top_product = top_product_data['product__name'] if top_product_data else "None"
 
-    # --- Cart Logic ---
+    # Cart Logic
     cart = request.session.get('cart', {})
     total_cart_value = sum(float(item.get('subtotal', 0)) for item in cart.values())
 
@@ -93,10 +106,11 @@ def sales_dashboard(request):
         'top_product': top_product,
     })
 
+# --- CART ACTIONS ---
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    
     quantity_raw = request.POST.get('quantity')
+    
     try:
         quantity = float(quantity_raw) if quantity_raw and float(quantity_raw) > 0 else 1.0
     except ValueError:
@@ -126,6 +140,7 @@ def clear_cart(request):
         del request.session['cart']
     return redirect('dashboard')
 
+# --- CHECKOUT ---
 def checkout(request):
     cart = request.session.get('cart', {})
     
@@ -133,7 +148,6 @@ def checkout(request):
         return redirect('dashboard')
 
     try:
-        # 1. Create a snapshot for the receipt BEFORE clearing the session
         receipt_items = []
         total_value = Decimal('0.00')
 
@@ -145,26 +159,22 @@ def checkout(request):
             subtotal = qty * price
             total_value += subtotal
 
-            # Save to Database
-
+            # FIX: Used 'subtotal' variable instead of undefined 'total'
             Sale.objects.create(
                 product=product,
                 quantity_sold=qty,
-                total_price=total
+                total_price=subtotal
             )
 
-            # Add to our receipt snapshot
             receipt_items.append({
                 'name': item['name'],
                 'quantity': qty,
                 'price': price,
                 'subtotal': subtotal
             })
-        # 2. Clear the cart session
+
         request.session['cart'] = {}
         request.session.modified = True
-
-        # 3. Generate a unique receipt number
         receipt_no = str(uuid.uuid4())[:8].upper()
         
         return render(request, 'inventory/success.html',{

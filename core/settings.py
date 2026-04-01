@@ -124,8 +124,15 @@ MPESA_CONSUMER_KEY = 'ctNEVQxR3C0bSfBS4B0Z3bX43EHtCbgPfRaMKvIDZi3uG6jo'
 MPESA_CONSUMER_SECRET = 'xg8jFh7YKeIe1s34mnQb7firjk99TK1SVpxYL7VzSPUI63tBbizgyAbB4F4dd1jk'
 MPESA_SHORTCODE = '174379' # This is the default Sandbox Paybill
 MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
-MPESA_CALLBACK_URL = 'https://discernible-counteractively-korey.ngrok-free.app/mpesa/callback/'
+MPESA_CALLBACK_URL = 'https://discernible-counteractively-korey.ngrok-free.dev/mpesa/callback/'
 
 
 # Update ALLOWED_HOSTS so Django accepts the ngrok traffic
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'discernible-counteractively-korey.ngrok-free.dev']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://discernible-counteractively-korey.ngrok-free.dev'
+]
+
+# Ensure your callback matches your forwarding address
+MPESA_CALLBACK_URL = 'https://discernible-counteractively-korey.ngrok-free.dev/mpesa/callback/'
